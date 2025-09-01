@@ -169,12 +169,12 @@ const DEFAULT_STATE = {
          * Current width. Affected by: user filmstrip resize,
          * window resize, panels open/ close.
          */
-        current: null,
+        current: 190,
 
         /**
          * Width set by user resize. Used as the preferred width.
          */
-        userSet: null
+        userSet: 190
     }
 };
 

@@ -306,7 +306,8 @@ class AbstractVideoManager extends PureComponent<IProps> {
             status,
             time: this.getTime(),
             ownerId: _ownerId,
-            muted: this.isMuted()
+            muted: this.isMuted(),
+            duration: this.getDuration()
         });
     }
 
@@ -422,6 +423,9 @@ class AbstractVideoManager extends PureComponent<IProps> {
         return 0;
     }
 
+    getDuration() {
+        return 0;
+    }
     /**
      * Disposes current video player.
      *
@@ -480,13 +484,14 @@ export function _mapDispatchToProps(dispatch: IStore['dispatch']) {
         _muteLocal: (value: boolean) => {
             dispatch(muteLocal(value, MEDIA_TYPE.AUDIO));
         },
-        _setSharedVideoStatus: ({ videoUrl, status, time, ownerId, muted }: any) => {
+        _setSharedVideoStatus: ({ videoUrl, status, time, ownerId, muted, duration }: any) => {
             dispatch(setSharedVideoStatus({
                 videoUrl,
                 status,
                 time,
                 ownerId,
-                muted
+                muted,
+                duration
             }));
         }
     };

@@ -121,7 +121,7 @@ import {
 import { isScreenshotCaptureEnabled } from '../../react/features/screenshot-capture/functions';
 import SettingsDialog from '../../react/features/settings/components/web/SettingsDialog';
 import { SETTINGS_TABS } from '../../react/features/settings/constants';
-import { playSharedVideo, stopSharedVideo } from '../../react/features/shared-video/actions';
+import { playSharedVideo, stopSharedVideo, seekSharedVideo } from '../../react/features/shared-video/actions';
 import { extractYoutubeIdOrURL } from '../../react/features/shared-video/functions';
 import { setRequestingSubtitles, toggleRequestingSubtitles } from '../../react/features/subtitles/actions';
 import { isAudioMuteButtonDisabled } from '../../react/features/toolbox/functions';
@@ -589,6 +589,11 @@ function initCommands() {
             if (id) {
                 APP.store.dispatch(playSharedVideo(id));
             }
+        },
+        'seek-share-video': time => {
+            // sendAnalytics(createApiEvent('share.video.seek'));
+
+            APP.store.dispatch(seekSharedVideo(time));
         },
         'stop-share-video': () => {
             sendAnalytics(createApiEvent('share.video.stop'));
@@ -2205,12 +2210,14 @@ class API {
      *  the video or audio sharing.
      * @returns {void}
      */
-    notifyAudioOrVideoSharingToggled(mediaType, value, participantId) {
+    notifyAudioOrVideoSharingToggled(mediaType, value, participantId, time, duration) {
         this._sendEvent({
             name: 'audio-or-video-sharing-toggled',
             mediaType,
             value,
-            participantId
+            participantId,
+            time,
+            duration
         });
     }
 

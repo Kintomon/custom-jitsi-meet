@@ -49,6 +49,7 @@ import {
 import AudioTracksContainer from './AudioTracksContainer';
 import Thumbnail from './Thumbnail';
 import ThumbnailWrapper from './ThumbnailWrapper';
+import { getParticipantById, getRemoteParticipants, isLocalParticipantModerator, isParticipantModerator, isSharedVideoParticipant } from '../../../base/participants/functions';
 
 
 const BACKGROUND_COLOR = 'rgba(51, 51, 51, .5)';
@@ -427,6 +428,12 @@ export interface IProps extends WithTranslation {
      * The type of filmstrip to be displayed.
      */
     filmstripType: string;
+
+    sharingVideo : boolean | undefined;
+
+    moderatorID : string | undefined;
+
+    isLocalModerator : boolean | undefined;
 }
 
 interface IState {
@@ -554,6 +561,9 @@ class Filmstrip extends PureComponent <IProps, IState> {
             _verticalViewGrid,
             _verticalViewMaxWidth,
             filmstripType,
+            sharingVideo,
+            moderatorID,
+            isLocalModerator,
             t
         } = this.props;
         const classes = withStyles.getClasses(this.props);
@@ -606,7 +616,23 @@ class Filmstrip extends PureComponent <IProps, IState> {
                     && !_resizableFilmstrip && 'filmstrip-hover',
                     _verticalViewGrid && 'vertical-view-grid') }
                 id = 'remoteVideos'>
-                {!_disableSelfView && !_verticalViewGrid && (
+                
+                {sharingVideo && !_verticalViewGrid && (
+                    <div
+                        className = 'filmstrip__videos'
+                        id = 'filmstripModeratorVideo'>
+                        {
+                            !tileViewActive && filmstripType === FILMSTRIP_TYPE.MAIN
+                            && <div id = 'filmstripModeratorVideoThumbnail'>
+                                <Thumbnail
+                                    filmstripType = { FILMSTRIP_TYPE.MAIN }
+                                    participantID = {moderatorID}
+                                    key = 'moderator' />
+                            </div>
+                        }
+                    </div>
+                )}
+                { !isLocalModerator && !_disableSelfView && !_verticalViewGrid && (
                     <div
                         className = 'filmstrip__videos'
                         id = 'filmstripLocalVideo'>
@@ -665,8 +691,9 @@ class Filmstrip extends PureComponent <IProps, IState> {
                                 (isMouseDown || _alwaysShowResizeBar) && 'visible',
                                 _topPanelFilmstrip && 'top-panel')
                             }
-                            onMouseDown = { this._onDragHandleMouseDown }>
-                            <div className = { clsx(classes.dragHandle, 'dragHandle') } />
+                            // onMouseDown = { this._onDragHandleMouseDown }
+                            >
+                            {/* <div className = { clsx(classes.dragHandle, 'dragHandle') } /> */}
                         </div>
                         {filmstrip}
                     </div>
@@ -1095,9 +1122,13 @@ function _mapStateToProps(state: IReduxState, ownProps: any) {
     const { localScreenShare } = state['features/base/participants'];
     const reduceHeight = state['features/toolbox'].visible && toolbarButtons?.length;
     const remoteVideosVisible = shouldRemoteVideosBeVisible(state);
+    const remoteParticipants = getRemoteParticipants(state);
+    const sharingVideo = Array.from(remoteParticipants.values()).some(p => isSharedVideoParticipant(p));
+    const moderatorID= Array.from(remoteParticipants.values()).find(p => isParticipantModerator(p))?.id;
     const disableSelfView = getHideSelfView(state);
     const { videoSpaceWidth, clientHeight } = state['features/base/responsive-ui'];
     const filmstripDisabled = isFilmstripDisabled(state);
+
 
     const collapseTileView = reduceHeight
         && isMobileBrowser()
@@ -1121,6 +1152,7 @@ function _mapStateToProps(state: IReduxState, ownProps: any) {
     const _isVerticalFilmstrip = _currentLayout === LAYOUTS.VERTICAL_FILMSTRIP_VIEW
         || (filmstripType === FILMSTRIP_TYPE.MAIN && _currentLayout === LAYOUTS.STAGE_FILMSTRIP_VIEW);
 
+    const isLocalModerator = isLocalParticipantModerator(state);
     return {
         _className: className,
         _chatOpen: state['features/chat'].isOpen,
@@ -1144,7 +1176,10 @@ function _mapStateToProps(state: IReduxState, ownProps: any) {
         _verticalFilmstripWidth: verticalFilmstripWidth.current,
         _verticalViewMaxWidth: getVerticalViewMaxWidth(state),
         _videosClassName: videosClassName,
-        _alwaysShowResizeBar: alwaysShowResizeBar
+        _alwaysShowResizeBar: alwaysShowResizeBar,
+        moderatorID,
+        sharingVideo,
+        isLocalModerator
     };
 }
 

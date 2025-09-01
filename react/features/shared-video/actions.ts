@@ -7,11 +7,12 @@ import {
     RESET_SHARED_VIDEO_STATUS,
     SET_ALLOWED_URL_DOMAINS,
     SET_CONFIRM_SHOW_VIDEO,
-    SET_SHARED_VIDEO_STATUS
+    SET_SHARED_VIDEO_STATUS,
+    SEEK_SHARED_VIDEO
 } from './actionTypes';
 import { ShareVideoConfirmDialog, SharedVideoDialog } from './components';
 import { PLAYBACK_START, PLAYBACK_STATUSES } from './constants';
-import { isSharedVideoEnabled, sendShareVideoCommand } from './functions';
+import { isSharedVideoEnabled, sendShareVideoCommand, sendShareVideoCommandToSeek } from './functions';
 
 
 /**
@@ -61,8 +62,8 @@ export function resetSharedVideoStatus() {
  *     videoUrl: string,
  * }}
  */
-export function setSharedVideoStatus({ videoUrl, status, time, ownerId, muted }: {
-    muted?: boolean; ownerId?: string; status: string; time: number; videoUrl: string;
+export function setSharedVideoStatus({ videoUrl, status, time, ownerId, muted, duration }: {
+    muted?: boolean; ownerId?: string; status: string; time: number; videoUrl: string; duration?: number;
 }) {
     return {
         type: SET_SHARED_VIDEO_STATUS,
@@ -70,7 +71,8 @@ export function setSharedVideoStatus({ videoUrl, status, time, ownerId, muted }:
         status,
         time,
         videoUrl,
-        muted
+        muted,
+        duration
     };
 }
 
@@ -127,7 +129,8 @@ export function playSharedVideo(videoUrl: string) {
                 id: videoUrl,
                 localParticipantId: localParticipant?.id,
                 status: PLAYBACK_START,
-                time: 0
+                time: 0,
+                duration:0
             });
         }
     };
@@ -199,5 +202,35 @@ export function showConfirmPlayingDialog(actor: String, onSubmit: Function) {
 export function hideConfirmPlayingDialog() {
     return (dispatch: IStore['dispatch']) => {
         dispatch(hideDialog(ShareVideoConfirmDialog));
+    };
+}
+
+export function seekSharedVideo(time: number) {
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        const state = getState();
+
+
+        console.log("shared video status", state);
+        if (!isSharedVideoEnabled(state)) {
+            return;
+        }
+
+        const { ownerId, status, videoUrl, muted, duration } = state['features/shared-video'];
+        const localParticipant = getLocalParticipant(state);
+
+        console.log(videoUrl, ownerId, localParticipant)
+        // Only the owner can control seeking; ignore otherwise.
+        if (!videoUrl || ownerId !== localParticipant?.id) {
+            return;
+        }
+        
+        dispatch(setSharedVideoStatus({
+            videoUrl,
+            status: status || '',
+            time: time,
+            ownerId,
+            muted,
+            duration: duration || 0
+        }));
     };
 }

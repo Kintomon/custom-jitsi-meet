@@ -70,14 +70,14 @@ const ThumbnailBottomIndicators = ({
     );
 
     return (<div className = { cx(className, 'bottom-indicators') }>
-        {
+        {/* {
             showStatusIndicators && <StatusIndicators
                 audio = { !isVirtualScreenshareParticipant }
                 moderator = { true }
                 participantID = { participantId }
                 screenshare = { isVirtualScreenshareParticipant }
                 thumbnailType = { thumbnailType } />
-        }
+        } */}
         {
             _showDisplayName && (
                 <span className = { styles.nameContainer }>

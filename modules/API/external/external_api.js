@@ -74,6 +74,7 @@ const commands = {
     showNotification: 'show-notification',
     startRecording: 'start-recording',
     startShareVideo: 'start-share-video',
+    seekSharedVideo: 'seek-share-video',
     stopRecording: 'stop-recording',
     stopShareVideo: 'stop-share-video',
     subject: 'subject',

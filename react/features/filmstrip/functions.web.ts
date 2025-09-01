@@ -168,15 +168,17 @@ export function calculateThumbnailSizeForVerticalView(clientWidth = 0, filmstrip
         Math.max(clientWidth - VERTICAL_VIEW_HORIZONTAL_MARGIN, 0),
         (isResizable ? filmstripWidth : interfaceConfig.FILM_STRIP_MAX_HEIGHT) || DEFAULT_FILMSTRIP_WIDTH);
 
+    const localHeight = Math.floor(availableWidth
+        / (interfaceConfig.LOCAL_THUMBNAIL_RATIO || DEFAULT_LOCAL_TILE_ASPECT_RATIO));
+
     return {
         local: {
-            height: Math.floor(availableWidth
-                / (interfaceConfig.LOCAL_THUMBNAIL_RATIO || DEFAULT_LOCAL_TILE_ASPECT_RATIO)),
+            height: localHeight,
             width: availableWidth
         },
         remote: {
             height: isResizable
-                ? DEFAULT_FILMSTRIP_WIDTH
+                ? localHeight
                 : Math.floor(availableWidth / interfaceConfig.REMOTE_THUMBNAIL_RATIO),
             width: availableWidth
         }

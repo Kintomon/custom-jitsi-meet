@@ -55,7 +55,7 @@ MiddlewareRegistry.register(store => next => action => {
 
         conference.addCommandListener(SHARED_VIDEO,
             ({ value, attributes }: { attributes: {
-                muted: string; state: string; time: string; }; value: string; },
+                muted: string; state: string; time: string; duration?: string }; value: string; },
             from: string) => {
                 const state = getState();
                 const sharedVideoStatus = attributes.state;
@@ -160,13 +160,13 @@ MiddlewareRegistry.register(store => next => action => {
         const state = getState();
         const conference = getCurrentConference(state);
         const localParticipantId = getLocalParticipant(state)?.id;
-        const { videoUrl, status, ownerId, time, muted, volume } = action;
+        const { videoUrl, status, ownerId, time, muted, volume, duration } = action;
         const operator = status === PLAYBACK_STATUSES.PLAYING ? 'is' : '';
 
         logger.debug(`User with id: ${ownerId} ${operator} ${status} video sharing.`);
 
         if (typeof APP !== 'undefined') {
-            APP.API.notifyAudioOrVideoSharingToggled(MEDIA_TYPE.VIDEO, status, ownerId);
+            APP.API.notifyAudioOrVideoSharingToggled(MEDIA_TYPE.VIDEO, status, ownerId, time, duration);
         }
 
         // when setting status we need to send the command for that, but not do it for the start command
@@ -185,7 +185,8 @@ MiddlewareRegistry.register(store => next => action => {
                 status,
                 time,
                 id: videoUrl,
-                volume
+                volume,
+                duration
             });
         }
         break;
@@ -202,7 +203,7 @@ MiddlewareRegistry.register(store => next => action => {
         logger.debug(`User with id: ${stateOwnerId} stop video sharing.`);
 
         if (typeof APP !== 'undefined') {
-            APP.API.notifyAudioOrVideoSharingToggled(MEDIA_TYPE.VIDEO, 'stop', stateOwnerId);
+            APP.API.notifyAudioOrVideoSharingToggled(MEDIA_TYPE.VIDEO, 'stop', stateOwnerId, 0, 0);
         }
 
         if (localParticipantId === stateOwnerId) {
@@ -215,7 +216,8 @@ MiddlewareRegistry.register(store => next => action => {
                 muted: true,
                 status: 'stop',
                 time: 0,
-                volume: 0
+                volume: 0,
+                duration:0
             });
         }
         break;
@@ -237,7 +239,7 @@ MiddlewareRegistry.register(store => next => action => {
  * @returns {void}
  */
 function handleSharingVideoStatus(store: IStore, videoUrl: string,
-        { state, time, from, muted }: { from: string; muted: string; state: string; time: string; },
+        { state, time, from, muted, duration }: { from: string; muted: string; state: string; time: string; duration?:string },
         conference: IJitsiConference) {
     const { dispatch, getState } = store;
     const localParticipantId = getLocalParticipant(getState())?.id;
@@ -273,7 +275,8 @@ function handleSharingVideoStatus(store: IStore, videoUrl: string,
                 videoUrl,
                 status: state,
                 time: Number(time),
-                ownerId: localParticipantId
+                ownerId: localParticipantId,
+                duration: Number(duration)
             }));
         }
     }
@@ -284,7 +287,8 @@ function handleSharingVideoStatus(store: IStore, videoUrl: string,
             ownerId: from,
             status: state,
             time: Number(time),
-            videoUrl
+            videoUrl,
+            duration: Number(duration)
         }));
     }
 }

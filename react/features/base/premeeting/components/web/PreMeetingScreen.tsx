@@ -223,7 +223,7 @@ const PreMeetingScreen = ({
                         <h1 className = { classes.title }>
                             {title}
                         </h1>
-                        {_roomName && (
+                        {false && _roomName && (
                             <span className = { classes.roomNameContainer }>
                                 {isOverflowing ? (
                                     <Tooltip content = { _roomName }>

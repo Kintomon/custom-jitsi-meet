@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
 import { IReduxState } from '../../../app/types';
-import { getLocalParticipant } from '../../../base/participants/functions';
+import { getLocalParticipant, isSharedVideoParticipant, getParticipantById, isParticipantModerator, } from '../../../base/participants/functions';
 import { getHideSelfView } from '../../../base/settings/functions.any';
 import { LAYOUTS } from '../../../video-layout/constants';
 import { getCurrentLayout } from '../../../video-layout/functions.web';
@@ -97,32 +97,32 @@ class ThumbnailWrapper extends Component<IProps> {
         if (_participantID === 'local') {
             return _disableSelfView ? null : (
                 <Thumbnail
-                    filmstripType = { _filmstripType }
-                    horizontalOffset = { _horizontalOffset }
-                    key = 'local'
-                    style = { style }
-                    width = { _thumbnailWidth } />);
+                    filmstripType={_filmstripType}
+                    horizontalOffset={_horizontalOffset}
+                    key='local'
+                    style={style}
+                    width={_thumbnailWidth} />);
         }
 
         if (_isLocalScreenShare) {
             return _disableSelfView ? null : (
                 <Thumbnail
-                    filmstripType = { _filmstripType }
-                    horizontalOffset = { _horizontalOffset }
-                    key = 'localScreenShare'
-                    participantID = { _participantID }
-                    style = { style }
-                    width = { _thumbnailWidth } />);
+                    filmstripType={_filmstripType}
+                    horizontalOffset={_horizontalOffset}
+                    key='localScreenShare'
+                    participantID={_participantID}
+                    style={style}
+                    width={_thumbnailWidth} />);
         }
 
         return (
             <Thumbnail
-                filmstripType = { _filmstripType }
-                horizontalOffset = { _horizontalOffset }
-                key = { `remote_${_participantID}` }
-                participantID = { _participantID }
-                style = { style }
-                width = { _thumbnailWidth } />
+                filmstripType={_filmstripType}
+                horizontalOffset={_horizontalOffset}
+                key={`remote_${_participantID}`}
+                participantID={_participantID}
+                style={style}
+                width={_thumbnailWidth} />
         );
     }
 }
@@ -135,8 +135,10 @@ class ThumbnailWrapper extends Component<IProps> {
  * @private
  * @returns {IProps}
  */
-function _mapStateToProps(state: IReduxState, ownProps: { columnIndex: number;
-    data: { filmstripType: string; }; index?: number; rowIndex: number; }) {
+function _mapStateToProps(state: IReduxState, ownProps: {
+    columnIndex: number;
+    data: { filmstripType: string; }; index?: number; rowIndex: number;
+}) {
     const _currentLayout = getCurrentLayout(state);
     const { remoteParticipants: remote } = state['features/filmstrip'];
     const activeParticipants = getActiveParticipantsIds(state);
@@ -145,9 +147,9 @@ function _mapStateToProps(state: IReduxState, ownProps: { columnIndex: number;
     const filmstripType = ownProps.data?.filmstripType;
     const stageFilmstrip = filmstripType === FILMSTRIP_TYPE.STAGE;
     const sortedActiveParticipants = activeParticipants.sort();
-    const remoteParticipants = stageFilmstrip ? sortedActiveParticipants : remote;
-    const remoteParticipantsLength = remoteParticipants.length;
     const localId = getLocalParticipant(state)?.id;
+    const remoteParticipants = (stageFilmstrip ? sortedActiveParticipants : remote).filter(p => !isParticipantModerator(getParticipantById(state, p)) && (!isParticipantModerator(getLocalParticipant(state))&&!isSharedVideoParticipant(getParticipantById(state, p))));
+    const remoteParticipantsLength = remoteParticipants.length;
 
     if (_currentLayout === LAYOUTS.TILE_VIEW || _verticalViewGrid || stageFilmstrip) {
         const { columnIndex, rowIndex } = ownProps;
@@ -179,11 +181,11 @@ function _mapStateToProps(state: IReduxState, ownProps: { columnIndex: number;
             // We need to include the local screenshare participant in tile view.
             participantsLength = remoteParticipantsLength
 
-            // Add local camera and screen share to total participant count when self view is not disabled.
-            + (disableSelfView ? 0 : localParticipantsLength)
+                // Add local camera and screen share to total participant count when self view is not disabled.
+                + (disableSelfView ? 0 : localParticipantsLength)
 
-            // Removes iAmRecorder from the total participants count.
-            - (iAmRecorder ? 1 : 0);
+                // Removes iAmRecorder from the total participants count.
+                - (iAmRecorder ? 1 : 0);
         }
 
         if (rowIndex === rows - 1) { // center the last row

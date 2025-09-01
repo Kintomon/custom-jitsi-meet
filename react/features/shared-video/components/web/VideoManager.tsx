@@ -1,157 +1,177 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import Hls from 'hls.js';
 
 import { PLAYBACK_STATUSES } from '../../constants';
-
 import AbstractVideoManager, {
     IProps,
     _mapDispatchToProps,
     _mapStateToProps
 } from './AbstractVideoManager';
 
-
-/**
- * Manager of shared video.
- */
 class VideoManager extends AbstractVideoManager {
     playerRef: React.RefObject<HTMLVideoElement>;
+    _hls?: Hls;
+    _lastUrl?: string;
 
-    /**
-     * Initializes a new VideoManager instance.
-     *
-     * @param {Object} props - This component's props.
-     *
-     * @returns {void}
-     */
     constructor(props: IProps) {
         super(props);
-
         this.playerRef = React.createRef();
     }
 
-    /**
-     * Retrieves the current player ref.
-     */
     get player() {
         return this.playerRef.current;
     }
 
-    /**
-     * Indicates the playback state of the video.
-     *
-     * @returns {string}
-     */
-    override getPlaybackStatus() {
-        let status;
+    /** ---------- lifecycle ---------- */
 
-        if (!this.player) {
-            return;
-        }
-
-        if (this.player.paused) {
-            status = PLAYBACK_STATUSES.PAUSED;
-        } else {
-            status = PLAYBACK_STATUSES.PLAYING;
-        }
-
-        return status;
+    override componentDidMount() {
+        this._setupSource(this.props.videoId);
     }
 
-    /**
-     * Indicates whether the video is muted.
-     *
-     * @returns {boolean}
-     */
+    override componentDidUpdate(prevProps: IProps) {
+        if (prevProps.videoId !== this.props.videoId) {
+            this._setupSource(this.props.videoId);
+        }
+        if (prevProps._time !== this.props._time) {
+            this.seek(this.props._time || 0)
+        }
+        if (prevProps._status !== this.props._status) {
+            if (this.props._status === "pause") this.pause(); else this.play();
+        }
+        if (prevProps._muted !== this.props._muted) {
+            if (this.props._muted) this.mute(); else this.unMute();
+        }
+    }
+
+    override componentWillUnmount() {
+        this._destroyHls();
+    }
+
+    /** ---------- source / hls setup ---------- */
+
+    _isHls(url?: string) {
+        return typeof url === 'string' && /(\.m3u8)(\?|#|$)/i.test(url);
+    }
+
+    _destroyHls() {
+        try {
+            this._hls?.destroy();
+        } catch { }
+        this._hls = undefined;
+    }
+
+    _setupSource(url?: string) {
+        console.log(url)
+        const video = this.player;
+        if (!video || !url || url === this._lastUrl) return;
+        this._lastUrl = url;
+
+        // Always clear previous bindings
+        this._destroyHls();
+        try {
+            // Stop current playback and clear <video> src to release old resource
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        } catch { }
+
+        if (this._isHls(url)) {
+            // Prefer hls.js where supported; fall back to Safari native HLS
+            if (Hls.isSupported()) {
+                const hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true
+                });
+                this._hls = hls;
+
+                hls.on(Hls.Events.ERROR, (_evt, data) => {
+                    // fatal network or media error => bubble to existing onError()
+                    if (data?.fatal) {
+                        this.onError();
+                    }
+                });
+
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                // autoplay if owner requested autoPlay
+                video.play().catch(() => {/* ignore autoplay issues */ });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Safari (iOS/macOS) native HLS
+                video.src = url;
+                video.play().catch(() => {/* ignore autoplay issues */ });
+            } else {
+                // No HLS support at all
+                this.onError();
+            }
+        } else {
+            // Non-HLS: simple direct source
+            video.src = url;
+            video.play().catch(() => {/* ignore autoplay issues */ });
+        }
+    }
+
+    /** ---------- status / controls ---------- */
+
+    override getPlaybackStatus() {
+        if (!this.player) return;
+        return this.player.paused ? PLAYBACK_STATUSES.PAUSED : PLAYBACK_STATUSES.PLAYING;
+    }
+
     override isMuted() {
         return this.player?.muted;
     }
 
-    /**
-     * Retrieves current volume.
-     *
-     * @returns {number}
-     */
     override getVolume() {
         return Number(this.player?.volume);
     }
 
-    /**
-     * Retrieves current time.
-     *
-     * @returns {number}
-     */
     override getTime() {
         return Number(this.player?.currentTime);
     }
 
-    /**
-     * Seeks video to provided time.
-     *
-     * @param {number} time - The time to seek to.
-     *
-     * @returns {void}
-     */
+    override getDuration() {
+        return Number(this.player?.duration);
+    }
+
     override seek(time: number) {
         if (this.player) {
             this.player.currentTime = time;
         }
     }
 
-    /**
-     * Plays video.
-     *
-     * @returns {void}
-     */
     override play() {
         return this.player?.play();
     }
 
-    /**
-     * Pauses video.
-     *
-     * @returns {void}
-     */
     override pause() {
         return this.player?.pause();
     }
 
-    /**
-     * Mutes video.
-     *
-     * @returns {void}
-     */
     override mute() {
-        if (this.player) {
-            this.player.muted = true;
-        }
+        if (this.player) this.player.muted = true;
     }
 
-    /**
-     * Unmutes video.
-     *
-     * @returns {void}
-     */
     override unMute() {
-        if (this.player) {
-            this.player.muted = false;
-        }
+        if (this.player) this.player.muted = false;
     }
 
-    /**
-     * Retrieves video tag params.
-     *
-     * @returns {void}
-     */
-    getPlayerOptions() {
-        const { _isOwner, videoId } = this.props;
+    /** ---------- video element props ---------- */
 
+    getPlayerOptions() {
+        const { _isOwner } = this.props;
+
+        // NOTE: we DO NOT set `src` here; _setupSource handles it (so HLS works).
+        // We still wire all the callbacks you already use.
         let options: any = {
             autoPlay: true,
-            src: videoId,
+            // playsInline avoids iOS fullscreen hijack
+            // playsInline: true,
             controls: _isOwner,
             onError: () => this.onError(),
             onPlay: () => this.onPlay(),
-            onVolumeChange: () => this.onVolumeChange()
+            onVolumeChange: () => this.onVolumeChange(),
+            onEnded: () => this.onPause() // ended -> treated like pause in your manager
         };
 
         if (_isOwner) {
@@ -160,23 +180,20 @@ class VideoManager extends AbstractVideoManager {
                 onPause: () => this.onPause(),
                 onTimeUpdate: this.throttledFireUpdateSharedVideoEvent
             };
-
         }
 
         return options;
     }
 
-    /**
-     * Implements React Component's render.
-     *
-     * @inheritdoc
-     */
+    /** ---------- render ---------- */
+
     override render() {
         return (
             <video
-                id = 'sharedVideoPlayer'
-                ref = { this.playerRef }
-                { ...this.getPlayerOptions() } />
+                id='sharedVideoPlayer'
+                ref={this.playerRef}
+                {...this.getPlayerOptions()}
+            />
         );
     }
 }

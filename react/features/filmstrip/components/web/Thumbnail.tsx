@@ -21,7 +21,9 @@ import {
     getParticipantByIdOrUndefined,
     getScreenshareParticipantIds,
     hasRaisedHand,
+    isLocalParticipantModerator,
     isLocalScreenshareParticipant,
+    isParticipantModerator,
     isScreenShareParticipant,
     isWhiteboardParticipant
 } from '../../../base/participants/functions';
@@ -166,6 +168,8 @@ export interface IProps extends WithTranslation {
      * sourceNameSignaling feature flag.
      */
     _isVirtualScreenshareParticipant: boolean;
+
+    _isModerator: boolean;
 
     /**
      * The current local video flip setting.
@@ -886,7 +890,7 @@ class Thumbnail extends Component<IProps, IState> {
                 }) }
                 className = { containerClassName }
                 id = 'sharedVideoContainer'
-                onClick = { this._onClick }
+                onClick = { this.props._isModerator?this._onClick:e=>e }
                 onKeyDown = { this._onTogglePinButtonKeyDown }
                 { ...(_isMobile ? {} : {
                     onMouseEnter: this._onMouseEnter,
@@ -1029,6 +1033,7 @@ class Thumbnail extends Component<IProps, IState> {
             _thumbnailType,
             _videoTrack,
             filmstripType,
+            _isModerator,
             t
         } = this.props;
         const classes = withStyles.getClasses(this.props);
@@ -1036,6 +1041,7 @@ class Thumbnail extends Component<IProps, IState> {
         const { isHovered, popoverVisible } = this.state;
         const styles = this._getStyles();
         let containerClassName = this._getContainerClassName();
+
         const videoTrackClassName
             = _videoTrack && !_isScreenSharing && _localFlipX ? 'flipVideoX' : '';
         const jitsiVideoTrack = _videoTrack?.jitsiTrack;
@@ -1078,7 +1084,7 @@ class Thumbnail extends Component<IProps, IState> {
                         onTouchStart: this._onTouchStart
                     }
                     : {
-                        onClick: this._onClick,
+                        onClick: this.props._isModerator?this._onClick:(e)=>(e),
                         onMouseEnter: this._onMouseEnter,
                         onMouseMove: this._onMouseMove,
                         onMouseLeave: this._onMouseLeave
@@ -1088,7 +1094,8 @@ class Thumbnail extends Component<IProps, IState> {
                 style = { styles.thumbnail }>
                 {/* this "button" is invisible, only here so that
                 keyboard/screen reader users can pin/unpin */}
-                <Tooltip
+                {/* {isLocalParticipantModerator(getLocalParticipant(state)) && ( */}
+                   <Tooltip
                     content = { pinButtonLabel }>
                     <span
                         aria-label = { pinButtonLabel }
@@ -1097,6 +1104,7 @@ class Thumbnail extends Component<IProps, IState> {
                         role = 'button'
                         tabIndex = { 0 } />
                 </Tooltip>
+                {/* )} */}
                 {!_gifSrc && (local
                     ? <span id = 'localVideoWrapper'>{video}</span>
                     : video)}
@@ -1140,7 +1148,7 @@ class Thumbnail extends Component<IProps, IState> {
                             participantID = { id } />
                     </div>
                 )}
-                <ThumbnailAudioIndicator _audioTrack = { _audioTrack } />
+                {/* <ThumbnailAudioIndicator _audioTrack = { _audioTrack } /> */}
                 {this._renderGif()}
                 <div
                     className = { clsx(classes.borderIndicator,
@@ -1202,7 +1210,7 @@ class Thumbnail extends Component<IProps, IState> {
                     isHovered = { isHovered }
                     isLocal = { isLocalScreenshareParticipant(_participant) }
                     isMobile = { _isMobile }
-                    onClick = { this._onClick }
+                    onClick = { this.props._isModerator?this._onClick:e=>e }
                     onMouseEnter = { this._onMouseEnter }
                     onMouseLeave = { this._onMouseLeave }
                     onMouseMove = { this._onMouseMove }
@@ -1364,6 +1372,7 @@ function _mapStateToProps(state: IReduxState, ownProps: any): Object {
         // skip showing tint for owner participants that are screensharing.
         && !screenshareParticipantIds.includes(id);
     const disableTintForeground = state['features/base/config'].disableCameraTintForeground ?? false;
+    const isModerator = isParticipantModerator(getLocalParticipant(state));
 
     return {
         _audioTrack,
@@ -1380,6 +1389,7 @@ function _mapStateToProps(state: IReduxState, ownProps: any): Object {
         _isScreenSharing: _videoTrack?.videoType === 'desktop',
         _isVideoPlayable: id && isVideoPlayable(state, id),
         _isVirtualScreenshareParticipant,
+        _isModerator: isModerator,
         _localFlipX: Boolean(localFlipX),
         _participant: participant,
         _raisedHand: hasRaisedHand(participant),

@@ -103,5 +103,7 @@ export interface IGetVisibleButtonsParams {
     clientWidth: number;
     jwtDisabledButtons: string[];
     mainToolbarButtonsThresholds: IMainToolbarButtonThresholds;
+    isModerator: boolean;
+    roleToolbarAllow: { [key: string]: string[] };
     toolbarButtons: string[];
 }

@@ -15,6 +15,8 @@ import FaceLandmarksDetector from './FaceLandmarksDetector';
 import { ADD_FACE_LANDMARKS, NEW_FACE_COORDINATES, UPDATE_FACE_COORDINATES } from './actionTypes';
 import { FACE_BOX_EVENT_TYPE } from './constants';
 import { sendFaceBoxToParticipants, sendFaceExpressionToParticipants } from './functions';
+import { setTileView } from '../video-layout/actions.any';
+import { pinParticipant } from '../base/participants/actions';
 
 
 MiddlewareRegistry.register((store: IStore) => (next: Function) => (action: AnyAction) => {
@@ -26,7 +28,13 @@ MiddlewareRegistry.register((store: IStore) => (next: Function) => (action: AnyA
         if (isEnabled) {
             FaceLandmarksDetector.init(store);
         }
-
+        const state = store.getState();
+        const conference = state['features/base/conference']?.conference;
+        const me = getLocalParticipant(state);
+        if (me?.role === 'moderator') {
+            store.dispatch(setTileView(false));        // keep away from tiles
+            store.dispatch(pinParticipant(me.id));     // force me on large video (and everyone, via follow-me)
+        }
         return next(action);
     } else if (action.type === ENDPOINT_MESSAGE_RECEIVED) {
         // Allow using remote face centering data when local face centering is not enabled.
@@ -48,82 +56,82 @@ MiddlewareRegistry.register((store: IStore) => (next: Function) => (action: AnyA
     }
 
     switch (action.type) {
-    case CONFERENCE_WILL_LEAVE : {
-        FaceLandmarksDetector.stopDetection(store);
+        case CONFERENCE_WILL_LEAVE: {
+            FaceLandmarksDetector.stopDetection(store);
 
-        break;
-    }
-    case TRACK_ADDED: {
-        const { jitsiTrack: { isLocal, videoType }, muted } = action.track;
-
-        if (videoType === 'camera' && isLocal() && !muted) {
-            // need to pass this since the track is not yet added in the store
-            FaceLandmarksDetector.startDetection(store, action.track);
-        }
-
-        break;
-    }
-    case TRACK_UPDATED: {
-        const { jitsiTrack: { isLocal, videoType } } = action.track;
-
-        if (videoType !== 'camera' || !isLocal()) {
             break;
         }
+        case TRACK_ADDED: {
+            const { jitsiTrack: { isLocal, videoType }, muted } = action.track;
 
-        const { muted } = action.track;
-
-        if (typeof muted !== 'undefined') {
-            // addresses video mute state changes
-            if (muted) {
-                FaceLandmarksDetector.stopDetection(store);
-            } else {
-                FaceLandmarksDetector.startDetection(store);
+            if (videoType === 'camera' && isLocal() && !muted) {
+                // need to pass this since the track is not yet added in the store
+                FaceLandmarksDetector.startDetection(store, action.track);
             }
+
+            break;
         }
+        case TRACK_UPDATED: {
+            const { jitsiTrack: { isLocal, videoType } } = action.track;
 
-        break;
-    }
-    case TRACK_REMOVED: {
-        const { jitsiTrack: { isLocal, videoType } } = action.track;
+            if (videoType !== 'camera' || !isLocal()) {
+                break;
+            }
 
-        if (videoType === 'camera' && isLocal()) {
-            FaceLandmarksDetector.stopDetection(store);
+            const { muted } = action.track;
+
+            if (typeof muted !== 'undefined') {
+                // addresses video mute state changes
+                if (muted) {
+                    FaceLandmarksDetector.stopDetection(store);
+                } else {
+                    FaceLandmarksDetector.startDetection(store);
+                }
+            }
+
+            break;
         }
+        case TRACK_REMOVED: {
+            const { jitsiTrack: { isLocal, videoType } } = action.track;
 
-        break;
-    }
-    case ADD_FACE_LANDMARKS: {
-        const state = getState();
-        const { faceLandmarks } = action;
-        const conference = getCurrentConference(state);
+            if (videoType === 'camera' && isLocal()) {
+                FaceLandmarksDetector.stopDetection(store);
+            }
 
-        if (getParticipantCount(state) > 1) {
-            sendFaceExpressionToParticipants(conference, faceLandmarks);
+            break;
         }
+        case ADD_FACE_LANDMARKS: {
+            const state = getState();
+            const { faceLandmarks } = action;
+            const conference = getCurrentConference(state);
 
-        // Disabling for now as there is no value of having the data in speakerstats at the server
-        // sendFaceExpressionToServer(conference, faceLandmarks);
+            if (getParticipantCount(state) > 1) {
+                sendFaceExpressionToParticipants(conference, faceLandmarks);
+            }
 
-        break;
-    }
-    case NEW_FACE_COORDINATES: {
-        const state = getState();
-        const { faceBox } = action;
-        const conference = getCurrentConference(state);
-        const localParticipant = getLocalParticipant(state);
+            // Disabling for now as there is no value of having the data in speakerstats at the server
+            // sendFaceExpressionToServer(conference, faceLandmarks);
 
-        if (getParticipantCount(state) > 1) {
-            sendFaceBoxToParticipants(conference, faceBox);
+            break;
         }
+        case NEW_FACE_COORDINATES: {
+            const state = getState();
+            const { faceBox } = action;
+            const conference = getCurrentConference(state);
+            const localParticipant = getLocalParticipant(state);
 
-        dispatch({
-            type: UPDATE_FACE_COORDINATES,
-            faceBox,
-            id: localParticipant?.id
-        });
+            if (getParticipantCount(state) > 1) {
+                sendFaceBoxToParticipants(conference, faceBox);
+            }
 
-        break;
-    }
+            dispatch({
+                type: UPDATE_FACE_COORDINATES,
+                faceBox,
+                id: localParticipant?.id
+            });
+
+            break;
+        }
     }
 
     return next(action);

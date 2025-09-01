@@ -55,6 +55,16 @@
             margin-bottom: 8px;
         }
 
+        /**
+         * The Modertor video identifier.
+         */
+         &#filmstripModeratorVideo,
+         &#filmstripModeratorScreenShare {
+             align-self: flex-end;
+             display: block;
+             margin-bottom: 8px;
+         }
+
         &.hidden {
             bottom: calc(-196px - #{$newToolbarSizeWithPadding} + 50px);
         }

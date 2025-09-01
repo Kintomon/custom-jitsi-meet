@@ -27,31 +27,33 @@ var enableJaaS = false;
 var config = {
     // Connection
     //
+    //edited
+    hiddenDomain : 'recorder.meet.incast.ai',
 
     hosts: {
         // XMPP domain.
-        domain: 'jitsi-meet.example.com',
+        domain: 'meet.incast.ai',
 
         // When using authentication, domain for guest users.
         // anonymousdomain: 'guest.example.com',
 
         // Domain for authenticated users. Defaults to <domain>.
-        // authdomain: 'jitsi-meet.example.com',
+        // authdomain: 'meet.incast.ai',
 
         // Focus component domain. Defaults to focus.<domain>.
-        // focus: 'focus.jitsi-meet.example.com',
+        // focus: 'focus.meet.incast.ai',
 
         // XMPP MUC domain. FIXME: use XEP-0030 to discover it.
-        muc: 'conference.' + subdomain + 'jitsi-meet.example.com',
+        muc: 'conference.' + subdomain + 'meet.incast.ai',
     },
 
     // BOSH URL. FIXME: use XEP-0156 to discover it.
-    bosh: 'https://jitsi-meet.example.com/' + subdir + 'http-bind',
+    bosh: 'https://meet.incast.ai/' + subdir + 'http-bind',
 
     // Websocket URL (XMPP)
-    websocket: 'wss://jitsi-meet.example.com/' + subdir + 'xmpp-websocket',
+    websocket: 'wss://meet.incast.ai/' + subdir + 'xmpp-websocket',
 
-    // websocketKeepAliveUrl: 'https://jitsi-meet.example.com/' + subdir + '_unlock',
+    // websocketKeepAliveUrl: 'https://meet.incast.ai/' + subdir + '_unlock',
 
     // Whether BOSH should be preferred over WebSocket if both are configured.
     // preferBosh: false,
@@ -59,11 +61,11 @@ var config = {
     // The real JID of focus participant - can be overridden here
     // Do not change username - FIXME: Make focus username configurable
     // https://github.com/jitsi/jitsi-meet/issues/7376
-    // focusUserJid: 'focus@auth.jitsi-meet.example.com',
+    // focusUserJid: 'focus@auth.meet.incast.ai',
 
     // Option to send conference requests to jicofo over http (requires nginx rule for it)
     // conferenceRequestUrl:
-    //   'https://<!--# echo var="http_host" default="jitsi-meet.example.com" -->/' + subdir + 'conference-request/v1',
+    //   'https://<!--# echo var="http_host" default="meet.incast.ai" -->/' + subdir + 'conference-request/v1',
 
     // Options related to the bridge (colibri) data channel
     bridgeChannel: {
@@ -389,9 +391,9 @@ var config = {
     //     appKey: '<APP_KEY>', // Specify your app key here.
     //     // A URL to redirect the user to, after authenticating
     //     // by default uses:
-    //     // 'https://jitsi-meet.example.com/static/oauth.html'
+    //     // 'https://meet.incast.ai/static/oauth.html'
     //     redirectURI:
-    //          'https://jitsi-meet.example.com/subfolder/static/oauth.html',
+    //          'https://meet.incast.ai/subfolder/static/oauth.html',
     // },
 
     // configuration for all things recording related. Existing settings will be migrated here in the future.
@@ -414,22 +416,21 @@ var config = {
     //    // Link for the recording consent dialog's "Learn more" link.
     //    // consentLearnMoreLink: 'https://jitsi.org/meet/consent',
     // },
+//edited
+    recordingService: {
+        // When integrations like dropbox are enabled only that will be shown,
+        // by enabling fileRecordingsServiceEnabled, we show both the integrations
+        // and the generic recording service (its configuration and storage type
+        // depends on jibri configuration)
+        enabled: true,
+        // Whether to show the possibility to share file recording with other people
+        // (e.g. meeting participants), based on the actual implementation
+        // on the backend.
+        sharingEnabled: false,
 
-    // recordingService: {
-    //     // When integrations like dropbox are enabled only that will be shown,
-    //     // by enabling fileRecordingsServiceEnabled, we show both the integrations
-    //     // and the generic recording service (its configuration and storage type
-    //     // depends on jibri configuration)
-    //     enabled: false,
-
-    //     // Whether to show the possibility to share file recording with other people
-    //     // (e.g. meeting participants), based on the actual implementation
-    //     // on the backend.
-    //     sharingEnabled: false,
-
-    //     // Hide the warning that says we only store the recording for 24 hours.
-    //     hideStorageWarning: false,
-    // },
+        // Hide the warning that says we only store the recording for 24 hours.
+        hideStorageWarning: false,
+    },
 
     // DEPRECATED. Use recordingService.enabled instead.
     // fileRecordingsServiceEnabled: false,
@@ -448,20 +449,21 @@ var config = {
     //     // Whether to disable the self recording feature (only local participant streams).
     //     disableSelfRecording: false,
     // },
-
+//edited
     // Customize the Live Streaming dialog. Can be modified for a non-YouTube provider.
-    // liveStreaming: {
-    //    // Whether to enable live streaming or not.
-    //    enabled: false,
-    //    // Terms link
-    //    termsLink: 'https://www.youtube.com/t/terms',
-    //    // Data privacy link
-    //    dataPrivacyLink: 'https://policies.google.com/privacy',
-    //    // RegExp string that validates the stream key input field
-    //    validatorRegExpString: '^(?:[a-zA-Z0-9]{4}(?:-(?!$)|$)){4}',
-    //    // Documentation reference for the live streaming feature.
-    //    helpLink: 'https://jitsi.org/live'
-    // },
+    liveStreaming: {
+       // Whether to enable live streaming or not.
+       enabled: true,
+       customRtmp: true,
+       // Terms link
+       //termsLink: 'https://www.youtube.com/t/terms',
+       // Data privacy link
+       //dataPrivacyLink: 'https://policies.google.com/privacy',
+       // RegExp string that validates the stream key input field
+       //validatorRegExpString: '^(?:[a-zA-Z0-9]{4}(?:-(?!$)|$)){4}',
+       // Documentation reference for the live streaming feature.
+       //helpLink: 'https://jitsi.org/live'
+    },
 
     // DEPRECATED. Use liveStreaming.enabled instead.
     // liveStreamingEnabled: false,
@@ -761,7 +763,7 @@ var config = {
     // hideDominantSpeakerBadge: false,
 
     // Default language for the user interface. Cannot be overwritten.
-    // For iframe integrations, use the `lang` option directly instead.
+    // DEPRECATED! Use the `lang` iframe option directly instead.
     // defaultLanguage: 'en',
 
     // Disables profile and the edit of all fields from the profile settings (display name and email)
@@ -1115,7 +1117,7 @@ var config = {
         // The STUN servers that will be used in the peer to peer connections
         stunServers: [
 
-            // { urls: 'stun:jitsi-meet.example.com:3478' },
+            // { urls: 'stun:meet.incast.ai:3478' },
             { urls: 'stun:meet-jit-si-turnrelay.jitsi.net:443' },
         ],
     },
@@ -1293,7 +1295,7 @@ var config = {
     //     disabled: false,
 
     //     // whether to hide the logo on the deep linking pages.
-    //     hideLogo: false,
+         hideLogo: true,
 
     //     // The ios deeplinking config.
     //     ios: {
@@ -1491,10 +1493,10 @@ var config = {
     // The URL of the moderated rooms microservice, if available. If it
     // is present, a link to the service will be rendered on the welcome page,
     // otherwise the app doesn't render it.
-    // moderatedRoomServiceUrl: 'https://moderated.jitsi-meet.example.com',
+    // moderatedRoomServiceUrl: 'https://moderated.meet.incast.ai',
 
     // If true, tile view will not be enabled automatically when the participants count threshold is reached.
-    // disableTileView: true,
+    disableTileView: true,
 
     // If true, the tiles will be displayed contained within the available space rather than enlarged to cover it,
     // with a 16:9 aspect ratio (old behaviour).
@@ -1519,13 +1521,13 @@ var config = {
     // },
 
     // Hides the conference subject
-    // hideConferenceSubject: false,
+    hideConferenceSubject: true,
 
     // Hides the conference timer.
-    // hideConferenceTimer: false,
+    hideConferenceTimer: true,
 
     // Hides the recording label
-    // hideRecordingLabel: false,
+    hideRecordingLabel: true,
 
     // Hides the participants stats
     // hideParticipantsStats: true,
@@ -1761,12 +1763,12 @@ var config = {
     // Prevent the filmstrip from autohiding when screen width is under a certain threshold
     // disableFilmstripAutohiding: false,
 
-    // filmstrip: {
+    filmstrip: {
     //     // Disable the vertical/horizontal filmstrip.
     //     disabled: false,
     //     // Disables user resizable filmstrip. Also, allows configuration of the filmstrip
     //     // (width, tiles aspect ratios) through the interfaceConfig options.
-    //     disableResizable: false,
+        disableResizable: true,
 
     //     // Disables the stage filmstrip
     //     // (displaying multiple participants on stage besides the vertical filmstrip)
@@ -1774,7 +1776,7 @@ var config = {
 
     //     // Default number of participants that can be displayed on stage.
     //     // The user can change this in settings. Number must be between 1 and 6.
-    //     stageFilmstripParticipants: 1,
+        stageFilmstripParticipants: 1,
 
     //     // Disables the top panel (only shown when a user is sharing their screen).
     //     disableTopPanel: false,
@@ -1788,8 +1790,8 @@ var config = {
 
     //     // Whether the draggable resize bar of the filmstrip is always visible. Setting this to true will make
     //     // the filmstrip always visible in case `disableResizable` is false.
-    //     alwaysShowResizeBar: true,
-    // },
+        alwaysShowResizeBar: false,
+    },
 
     // Tile view related config options.
     // tileView: {
@@ -1835,7 +1837,7 @@ var config = {
     // },
 
     // Application logo url
-    // defaultLogoUrl: 'images/watermark.svg',
+    defaultLogoUrl: 'images/incast1.png',
 
     // Settings for the Excalidraw whiteboard integration.
     // whiteboard: {

@@ -224,14 +224,23 @@ export default function Toolbox({
     const toolbarAccLabel = 'toolbar.accessibilityLabel.moreActionsMenu';
     const containerClassName = `toolbox-content${isMobile || isNarrowLayout ? ' toolbox-content-mobile' : ''}`;
 
+    const roleToolbarAllow = {
+        moderator: Object.keys(allButtons).slice(0,-1),              // full set
+        // participant: []                                  // show nothing
+        participant: ['microphone','camera','chat','raisehand']
+      };
+
     const { mainMenuButtons, overflowMenuButtons } = getVisibleButtons({
         allButtons,
         buttonsWithNotifyClick,
         toolbarButtons: toolbarButtonsToUse,
         clientWidth: videoSpaceWidth,
         jwtDisabledButtons,
-        mainToolbarButtonsThresholds
+        mainToolbarButtonsThresholds,
+        isModerator,
+        roleToolbarAllow: roleToolbarAllow
     });
+
     const raiseHandInOverflowMenu = overflowMenuButtons.some(({ key }) => key === 'raisehand');
     const showReactionsInOverflowMenu = _shouldDisplayReactionsButtons
         && (
@@ -297,7 +306,7 @@ export default function Toolbox({
                                 showReactionsMenu = { showReactionsInOverflowMenu } />
                         )}
 
-                        {isButtonEnabled('hangup', toolbarButtonsToUse) && (
+                        {isModerator && isButtonEnabled('hangup', toolbarButtonsToUse) && (
                             endConferenceSupported
                                 ? <HangupMenuButton
                                     ariaControls = 'hangup-menu'

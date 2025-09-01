@@ -35,8 +35,12 @@ import { PARTICIPANT_ROLE } from '../participants/constants';
 import {
     getLocalParticipant,
     getParticipantById,
-    getPinnedParticipant
+    getPinnedParticipant,
+    isLocalParticipantModerator
 } from '../participants/functions';
+import { pinParticipant } from '../participants/actions';
+import { setTileView } from '../../video-layout/actions.any';
+import { setFollowMe } from '../../base/conference/actions.any';
 import MiddlewareRegistry from '../redux/MiddlewareRegistry';
 import StateListenerRegistry from '../redux/StateListenerRegistry';
 import { TRACK_ADDED, TRACK_REMOVED } from '../tracks/actionTypes';
@@ -335,6 +339,17 @@ function _conferenceJoined({ dispatch, getState }: IStore, next: Function, actio
             validateInput: hasDisplayName
         }));
     }
+
+    // Auto-enable Follow Me for moderators, disable tile view, and pin the moderator on stage.
+    const stateAfterJoin = getState();
+    if (isLocalParticipantModerator(stateAfterJoin)) {
+        const localId = getLocalParticipant(stateAfterJoin)?.id;
+        if (localId) {
+            dispatch(setFollowMe(true));
+            dispatch(pinParticipant(localId));
+        }
+    }
+    dispatch(setTileView(false));
 
     return result;
 }

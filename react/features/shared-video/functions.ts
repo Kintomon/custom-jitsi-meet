@@ -149,9 +149,9 @@ export function isURLAllowedForSharedVideo(url: string,
  * @param {string} time - The seek position of the video.
  * @returns {void}
  */
-export function sendShareVideoCommand({ id, status, conference, localParticipantId = '', time, muted, volume }: {
+export function sendShareVideoCommand({ id, status, conference, localParticipantId = '', time, muted, volume, duration }: {
     conference?: IJitsiConference; id: string; localParticipantId?: string; muted?: boolean;
-    status: string; time: number; volume?: number;
+    status: string; time: number; volume?: number; duration?: number;
 }) {
     conference?.sendCommandOnce(SHARED_VIDEO, {
         value: id,
@@ -160,7 +160,21 @@ export function sendShareVideoCommand({ id, status, conference, localParticipant
             muted,
             state: status,
             time,
-            volume
+            volume,
+            duration
+        }
+    });
+}
+
+
+export function sendShareVideoCommandToSeek({ time, conference, localParticipantId = ''}: {
+    conference?: IJitsiConference; localParticipantId?: string;
+    time: number;
+}) {
+    conference?.sendCommandOnce(SHARED_VIDEO, {
+        value: time,
+        attributes: {
+            from: localParticipantId,
         }
     });
 }

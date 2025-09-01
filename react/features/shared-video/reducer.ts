@@ -2,6 +2,7 @@ import ReducerRegistry from '../base/redux/ReducerRegistry';
 
 import {
     RESET_SHARED_VIDEO_STATUS,
+    SEEK_SHARED_VIDEO,
     SET_ALLOWED_URL_DOMAINS,
     SET_CONFIRM_SHOW_VIDEO,
     SET_SHARED_VIDEO_STATUS
@@ -9,6 +10,7 @@ import {
 import { DEFAULT_ALLOWED_URL_DOMAINS } from './constants';
 
 const initialState = {
+    confirmShowVideo:true,
     allowedUrlDomains: DEFAULT_ALLOWED_URL_DOMAINS
 };
 
@@ -21,6 +23,7 @@ export interface ISharedVideoState {
     time?: number;
     videoUrl?: string;
     volume?: number;
+    duration?: number;
 }
 
 /**
@@ -28,7 +31,7 @@ export interface ISharedVideoState {
  */
 ReducerRegistry.register<ISharedVideoState>('features/shared-video',
 (state = initialState, action): ISharedVideoState => {
-    const { videoUrl, status, time, ownerId, muted, volume } = action;
+    const { videoUrl, status, time, ownerId, muted, volume, duration } = action;
 
     switch (action.type) {
     case RESET_SHARED_VIDEO_STATUS:
@@ -50,15 +53,21 @@ ReducerRegistry.register<ISharedVideoState>('features/shared-video',
             status,
             time,
             videoUrl,
-            volume
+            volume,
+            duration
         };
-
     case SET_ALLOWED_URL_DOMAINS: {
         return {
             ...state,
             allowedUrlDomains: action.allowedUrlDomains
         };
     }
+
+    case SEEK_SHARED_VIDEO:
+        return {
+            ...state,
+            time
+        };
 
     default:
         return state;

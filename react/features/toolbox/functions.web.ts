@@ -41,14 +41,14 @@ export function isToolboxVisible(state: IReduxState) {
     const whiteboardVisible = isWhiteboardVisible(state);
 
     return Boolean(!iAmRecorder && !iAmSipGateway
-            && (
-                timeoutID
-                || visible
-                || alwaysVisible
-                || audioSettingsVisible
-                || videoSettingsVisible
-                || whiteboardVisible
-            ));
+        && (
+            timeoutID
+            || visible
+            || alwaysVisible
+            || audioSettingsVisible
+            || videoSettingsVisible
+            || whiteboardVisible
+        ));
 }
 
 /**
@@ -156,16 +156,27 @@ export function getVisibleButtons({
     toolbarButtons,
     clientWidth,
     jwtDisabledButtons,
-    mainToolbarButtonsThresholds
+    mainToolbarButtonsThresholds,
+    isModerator,
+    roleToolbarAllow
 }: IGetVisibleButtonsParams) {
+
+
     setButtonsNotifyClickMode(allButtons, buttonsWithNotifyClick);
 
-    const filteredButtons = Object.keys(allButtons).filter(key =>
+    let filteredButtons = Object.keys(allButtons).filter(key =>
         typeof key !== 'undefined' // filter invalid buttons that may be coming from config.mainToolbarButtons
         // override
         && !jwtDisabledButtons.includes(key)
         && isButtonEnabled(key, toolbarButtons));
 
+    if (!isModerator) {
+        const allow = new Set(roleToolbarAllow.participant);
+        filteredButtons = filteredButtons.filter(k => allow.has(k));
+    } else {
+        const allow = new Set(roleToolbarAllow.moderator);
+        filteredButtons = filteredButtons.filter(k => allow.has(k));
+    }
 
     const { order } = mainToolbarButtonsThresholds.find(({ width }) => clientWidth > width)
         || mainToolbarButtonsThresholds[mainToolbarButtonsThresholds.length - 1];
