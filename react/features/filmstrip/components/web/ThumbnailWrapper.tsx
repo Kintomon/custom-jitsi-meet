@@ -148,7 +148,7 @@ function _mapStateToProps(state: IReduxState, ownProps: {
     const stageFilmstrip = filmstripType === FILMSTRIP_TYPE.STAGE;
     const sortedActiveParticipants = activeParticipants.sort();
     const localId = getLocalParticipant(state)?.id;
-    const remoteParticipants = (stageFilmstrip ? sortedActiveParticipants : remote).filter(p => !isParticipantModerator(getParticipantById(state, p)) && (!isParticipantModerator(getLocalParticipant(state))&&!isSharedVideoParticipant(getParticipantById(state, p))));
+    const remoteParticipants = (stageFilmstrip ? sortedActiveParticipants : remote).filter(p => !isParticipantModerator(getParticipantById(state, p)) && !isSharedVideoParticipant(getParticipantById(state, p)));
     const remoteParticipantsLength = remoteParticipants.length;
 
     if (_currentLayout === LAYOUTS.TILE_VIEW || _verticalViewGrid || stageFilmstrip) {
